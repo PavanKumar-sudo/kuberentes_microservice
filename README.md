@@ -1,10 +1,74 @@
-# Kubernetes Helm Manual Setup Guide
+# Kubernetes Microservices Deployment (Terraform + Helm)
 
-This guide explains how to manually install Helm, configure kubectl, install NGINX Ingress Controller, and deploy microservices Helm charts on **EKS**, **AKS**, and **GKE** clusters.
+This repository contains:
+
+✅ **Terraform scripts** to create Kubernetes clusters on AWS EKS, Azure AKS, and Google GKE.
+✅ **A Helm chart** (`microservice_helmchart/`) to deploy all 4 microservices (`auth-service`, `order-service`, `product-service`, `user-service`).
+✅ **Dockerized microservices** stored in respective folders inside `microservice/`.
 
 ---
 
-## 📌 1. Install Helm (Common for All)
+## 📂 Repository Structure
+
+```
+.
+├── aws/                      # Terraform code for AWS EKS cluster
+├── azure/                    # Terraform code for Azure AKS cluster
+├── GKE/                      # Terraform code for Google GKE cluster
+├── microservice/             # Python microservices source code
+│   ├── auth-service/
+│   ├── order-service/
+│   ├── product-service/
+│   └── user-service/
+├── microservice_helmchart/   # Helm chart to deploy all microservices
+│   ├── templates/
+│   │   ├── configmap.yaml
+│   │   ├── deployment.yaml
+│   │   ├── hpa.yaml
+│   │   ├── ingress.yaml
+│   │   ├── secret.yaml
+│   │   └── service.yaml
+│   └── values.yaml
+└── README.md
+```
+
+---
+
+# 1️⃣ Terraform – Create Kubernetes Cluster
+
+### 📌 AWS EKS
+
+```bash
+cd aws
+terraform init
+terraform apply -auto-approve
+aws eks update-kubeconfig --name eks-prod-cluster --region us-east-1
+kubectl get nodes
+```
+
+### 📌 Azure AKS
+
+```bash
+cd azure
+terraform init
+terraform apply -auto-approve
+az aks get-credentials --resource-group myResourceGroup --name myAKSCluster --overwrite-existing
+kubectl get nodes
+```
+
+### 📌 Google GKE
+
+```bash
+cd GKE
+terraform init
+terraform apply -auto-approve
+gcloud container clusters get-credentials private-gke-cluster --region us-central1 --project pavan-tf-project
+kubectl get nodes
+```
+
+---
+
+# 2️⃣ Install Helm
 
 ```bash
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -13,16 +77,9 @@ helm version
 
 ---
 
-## 📌 2. AWS EKS (Elastic Kubernetes Service)
+# 3️⃣ Install NGINX Ingress Controller
 
-### ✅ 2.1 Configure kubectl
-
-```bash
-aws eks update-kubeconfig --name eks-prod-cluster --region us-east-1
-kubectl get nodes
-```
-
-### ✅ 2.2 Install NGINX Ingress Controller
+### ✅ For AWS EKS
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -35,25 +92,7 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-nlb-target-type"="ip"
 ```
 
-### ✅ 2.3 Verify
-
-```bash
-kubectl get pods -n ingress-nginx
-kubectl get svc -n ingress-nginx ingress-nginx-controller
-```
-
----
-
-## 📌 3. Azure AKS (Azure Kubernetes Service)
-
-### ✅ 3.1 Configure kubectl
-
-```bash
-az aks get-credentials --resource-group myResourceGroup --name myAKSCluster --overwrite-existing
-kubectl get nodes
-```
-
-### ✅ 3.2 Install NGINX Ingress Controller
+### ✅ For Azure AKS
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -64,25 +103,7 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.service.externalTrafficPolicy=Local
 ```
 
-### ✅ 3.3 Verify
-
-```bash
-kubectl get pods -n ingress-nginx
-kubectl get svc -n ingress-nginx ingress-nginx-controller
-```
-
----
-
-## 📌 4. Google GKE (Google Kubernetes Engine)
-
-### ✅ 4.1 Configure kubectl
-
-```bash
-gcloud container clusters get-credentials private-gke-cluster --region us-central1 --project pavan-tf-project
-kubectl get nodes
-```
-
-### ✅ 4.2 Install NGINX Ingress Controller
+### ✅ For Google GKE
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -92,7 +113,7 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace
 ```
 
-### ✅ 4.3 Verify
+### 🔍 Verify Ingress
 
 ```bash
 kubectl get pods -n ingress-nginx
@@ -101,7 +122,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller
 
 ---
 
-## 📌 5. Deploy Metrics Server (Optional for HPA)
+# 4️⃣ Deploy Metrics Server (Optional for HPA)
 
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -114,19 +135,16 @@ kubectl patch deployment metrics-server -n kube-system \
 
 ---
 
-## 📌 6. Deploy Your Microservices Helm Chart
-
-### ✅ 6.1 Package & Install Your Chart
+# 5️⃣ Deploy Microservices Helm Chart
 
 ```bash
 cd microservice_helmchart
 helm lint .
-
 helm upgrade --install my-microservices ./microservice_helmchart \
   --namespace default --create-namespace
 ```
 
-### ✅ 6.2 Verify Deployment
+### 🔍 Verify Deployment
 
 ```bash
 kubectl get pods
@@ -134,21 +152,48 @@ kubectl get svc
 kubectl get ingress
 ```
 
----
+Get ingress external IP:
 
-## 📌 7. Access Your Services
+```bash
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+```
 
-1. Get the **EXTERNAL-IP** of the ingress controller:
+Access services in browser:
 
-   ```bash
-   kubectl get svc -n ingress-nginx ingress-nginx-controller
-   ```
-2. Open in browser:
-
-   ```
-   http://<EXTERNAL-IP>/
-   ```
+```
+http://<EXTERNAL-IP>/
+```
 
 ---
 
-✅ **Follow these steps for EKS, AKS, and GKE as per the cluster you are working on.**
+# 🚀 What Can You Do Next?
+
+✅ **Automate Everything:**
+
+* Use Terraform Helm provider to deploy ingress and Helm charts automatically.
+* Create a GitHub Actions pipeline (`.github/workflows/deploy.yml`) for CI/CD.
+
+✅ **Add CI/CD for Microservices:**
+
+* Build Docker images using GitHub Actions.
+* Push images to Docker Hub or AWS ECR / Azure ACR / GCP Artifact Registry.
+* Automatically deploy the latest version to the cluster.
+
+✅ **Add Monitoring & Logging:**
+
+* Install Prometheus, Grafana, and Loki using Helm.
+* Collect metrics and logs for all services.
+
+✅ **Add Security & Scalability:**
+
+* Enable Horizontal Pod Autoscaler (HPA) and PodDisruptionBudgets.
+* Integrate secrets with AWS Secrets Manager, Azure Key Vault, or Google Secret Manager.
+
+✅ **Create Production-Ready Setup:**
+
+* Add TLS/SSL certificates using cert-manager.
+* Set up custom domains using Ingress.
+
+✅ **Implement Blue-Green / Canary Deployments:**
+
+* Use Helm hooks or Argo Rollouts for advanced deployment strategies.
