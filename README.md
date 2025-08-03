@@ -1,10 +1,15 @@
 # Kubernetes Microservices Deployment (Terraform + Helm)
 
+
 This repository contains:
 
-✅ **Terraform scripts** to create Kubernetes clusters on AWS EKS, Azure AKS, and Google GKE.
-✅ **A Helm chart** (`microservice_helmchart/`) to deploy all 4 microservices (`auth-service`, `order-service`, `product-service`, `user-service`).
-✅ **Dockerized microservices** stored in respective folders inside `microservice/`.
+Terraform scripts to create Kubernetes clusters on AWS EKS, Azure AKS, and Google GKE.
+
+A Helm chart (microservice_helmchart/) to deploy all 4 microservices (auth-service, order-service, product-service, user-service).
+
+Dockerized microservices stored in respective folders inside microservice/.
+
+
 
 ---
 
