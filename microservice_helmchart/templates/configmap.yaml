@@ -1,0 +1,10 @@
+{{- range $svc := .Values.services }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc.configMap }}
+data:
+  DATABASE_URL: "postgres://{{ $svc.name }}_user:password@{{ $svc.name }}-db:5432/{{ $svc.name }}"
+  REDIS_HOST: "{{ $svc.name }}-redis"
+{{- end }}

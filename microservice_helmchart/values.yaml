@@ -1,0 +1,47 @@
+services:
+  auth:
+    name: auth-service
+    image: pavankumar23/auth-service:latest
+    port: 8000
+    path: /auth(/|$)(.*)
+    configMap: auth-config
+    secret: auth-secrets
+    healthPath: "/health"
+    enableHPA: true
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+
+  order:
+    name: order-service
+    image: pavankumar23/order-service:latest
+    port: 5003
+    path: /order(/|$)(.*)
+    configMap: order-config
+    secret: order-secrets
+    healthPath: null
+    enableHPA: false
+
+  product:
+    name: product-service
+    image: pavankumar23/product-service:latest
+    port: 5002
+    path: /product(/|$)(.*)
+    configMap: product-config
+    secret: product-secrets
+    healthPath: null
+    enableHPA: false
+
+  user:
+    name: user-service
+    image: pavankumar23/user-service:latest
+    port: 5001
+    path: /user(/|$)(.*)
+    configMap: user-config
+    secret: user-secrets
+    healthPath: null
+    enableHPA: false
